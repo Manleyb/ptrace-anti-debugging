@@ -101,7 +101,7 @@ for i in $(seq 1 9999); do
 done
 ```
 
-## Additional Research
+## Additional Research - Maryam and Sami
 
 The accompanying `docs/Final Project Report.docx` analyzes further hardening techniques not implemented in this demo:
 
