@@ -6,7 +6,7 @@ This project demonstrates how to harden Linux binaries against dynamic analysis 
 
 The core tool (`ptrace-tracer.c`) exploits a fundamental property of Linux: a process can only have one active debugger (tracer) at a time. By having the program debug itself immediately upon launch, it occupies the single debugger slot.
 
-If an external analyst tries to attach GDB to follow the child process, the OS blocks it because the child already has a tracer (its parent). The sensitive code path then fails silently.
+If an external analyst tries to attach GDB to follow the child process, the program will terminate as the critical process that calls ptrace will not run and be unable to fix the invalid syscall which results in a crash. 
 
 ## How the Protection Works
 
@@ -14,7 +14,7 @@ The protection uses a split-process architecture. The program forks into a paren
 
 ### Phase 1: Fork and Lock
 
-The program splits into two processes. The child immediately requests to be traced by the parent, locking out other debuggers from attaching to it.
+The program splits into two processes. The child immediately requests to be traced by the parent.
 
 ```c
 pid_t pid = fork();
@@ -23,17 +23,17 @@ if (pid == 0) {
     ptrace(PTRACE_TRACEME, 0, NULL, 0);  // Child locks itself to parent
     child_logic();
 } else {
-    debugger_logic(pid);  // Parent becomes the shield
+    debugger_logic(pid);  // Parent becomes the debugger
 }
 ```
 
 ### Phase 2: The Trap (Syscall 10000)
 
-If the password is correct, the child executes syscall 10000. This syscall does not exist in the Linux kernel. Under normal circumstances, the kernel would return an error. However, because the parent is monitoring via `PTRACE_SYSCALL`, the child pauses before the syscall executes.
+If the password is correct, the child executes syscall 10000. This syscall does not exist in the Linux kernel. Under normal circumstances, the kernel would return an error and the program will terminate. However, because the parent is monitoring via `PTRACE_SYSCALL`, the child pauses before the syscall executes.
 
 ### Phase 3: Runtime Patching
 
-The parent catches the pause, reads the CPU registers, and performs a live patch:
+The parent catches the pause, reads the CPU registers, and patches the invalid syscall:
 
 1. Detects `regs.orig_rax == 10000` (the fake syscall)
 2. Swaps `rdi` and `rsi` (arguments were intentionally passed in wrong order)
@@ -72,7 +72,7 @@ Password: 3214
 [Program exits without printing success message]
 ```
 
-When GDB follows the child, it attempts to become the tracer. But the child already called `PTRACE_TRACEME`, designating its parent as the tracer. The OS blocks GDB from also tracing the child. Without the parent's intervention, the invalid syscall 10000 is never fixed, and the success message is never printed.
+When GDB follows the child, it attempts to become the tracer. But the child already called `PTRACE_TRACEME`, designating its parent as the tracer. Because of this GDB will block the parent from running. Without the parent's intervention, the invalid syscall 10000 is never fixed, and the success message is never printed.
 
 ## Building
 
