@@ -114,9 +114,3 @@ The accompanying `docs/Final Project Report.docx` analyzes further hardening tec
 
 - [Complete Guide to Anti-Debugging in Linux (Part 2)](https://linuxsecurity.com/features/hacker-s-corner-complete-guide-to-anti-debugging-in-linux-part-2)
 - [CodeBreakers 2006: Anti-Debugging Techniques](https://repo.zenk-security.com/Reversing%20.%20cracking/CodeBreakers%202006%20-%20AntiDebugging%20techniques.pdf)
-
-## Authors
-
-Maryam Ashraf, Sami Mahmoud, and Bryce Manley
-
-CISS 247 - Dr. Mubarek Mohammed
