@@ -15,10 +15,10 @@
 // Arguments are intentionally passed in the wrong registers (msg in rdi, fd in rsi)
 // to force the tracer to fix them up.
 void secure_print(const char *str)
-{
-    syscall(SC_OBFUSCATED, str, 1, strlen(str));
-}
-
+{                                                // A correct syscall would be write(int fd, const void *buf, size_t count);
+    syscall(SC_OBFUSCATED, str, 1, strlen(str)); // where fd is an integer that the operating system uses to identify an open file,
+}                                                //*buf is pointer to memory location and cont is number of bytes
+                                                 // I switched *buff and fd which will cause the program to crash unless switched
 void child_logic()
 {
     if (ptrace(PTRACE_TRACEME, 0, NULL, 0) < 0) {
@@ -90,10 +90,10 @@ int main(int argc, char **argv)
         perror("fork");
         return 1;
     }
-
     if (pid == 0) {
         child_logic();
     } else {
+        //parrent
         debugger_logic(pid);
     }
 
